@@ -1,0 +1,88 @@
+﻿@page "/dashboard/watchlist"
+@using Syncfusion.Blazor.Grids
+@using final_project.Shared.Models.DTOs
+@inject final_project.Client.Services.Company.ICompanyService CompanyService
+@using System.ComponentModel.DataAnnotations;
+@inject NavigationManager navManager;
+@using Syncfusion.Blazor.Buttons;
+@inject AuthenticationStateProvider AuthenticationStateProvider;
+@inject HttpClient Http
+@inject IJSRuntime js
+@attribute [Authorize]
+
+
+@if (Companies == null)
+{
+    <p>wait</p>
+}else{
+     <div class="col-lg-12 control-section">
+    <div class="content-wrapper">
+        <div class="row">
+            <SfGrid DataSource="@Companies" AllowPaging="true" AllowSorting="true" GridLines="GridLine.Both">
+                <GridColumns>
+                <GridColumn HeaderText="Logo" TextAlign="TextAlign.Center" Width="120">
+                    <Template>
+                        @{
+                        var comp = (context as CompanyDTODB);
+                            <div class="image">
+                            <img src="@comp.Logo_url"/>
+                            </div>
+                        }
+                    </Template>
+                </GridColumn>
+                <GridColumn Field=@nameof(Company.Ticker) HeaderText="Symbol" TextAlign="TextAlign.Center" Width="140"></GridColumn>
+                <GridColumn Field=@nameof(Company.Name) HeaderText="Name"  TextAlign="TextAlign.Center" Width="120"></GridColumn>
+                <GridColumn Field=@nameof(Company.Country) HeaderText="Country"  TextAlign="TextAlign.Center" Width="140"></GridColumn>
+                <GridColumn Field=@nameof(Company.Description) HeaderText="Description"  TextAlign="TextAlign.Center" ClipMode="ClipMode.EllipsisWithTooltip" Width="140"></GridColumn>
+                <GridColumn HeaderText="Actions" TextAlign="TextAlign.Center" Width="120">
+                    <Template>
+                            @{
+                                    var comp = (context as CompanyDTODB);
+                                <SfButton IsPrimary="true" @onclick="@(() => Delete(comp.Ticker))">Delete</SfButton>
+                        }
+                    </Template>
+                </GridColumn>
+                </GridColumns>
+            </SfGrid>
+        </div>
+    </div>
+</div>
+<SfButton IsPrimary="true" @onclick="@(() => Return())">Return</SfButton>
+}
+<style>
+    .image img {
+        height: 125px;
+        width: 125px;
+    }
+</style>
+@code {
+    private List<CompanyDTODB> Companies;
+    private CompanyDTODB Company { get; set; }
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        var comps = await CompanyService.GetWatchlist(await GetUserId());
+        Companies = comps.ToList();
+    }
+    private async Task<string> GetUserId(){
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        return user.FindFirst(c => c.Type == "sub")?.Value;;
+    }
+    private async Task Delete(string ticker)
+    {
+        if (await js.InvokeAsync<bool>("confirm", "Are you sure?"))
+        {
+            var idCompany = await Http.GetFromJsonAsync<int>($"api/companies/tickerid/{ticker}");
+            await CompanyService.DeleteFromCompanyUsers(await GetUserId(), idCompany);
+            var comps = await CompanyService.GetWatchlist(await GetUserId());
+            Companies = comps.ToList();
+        }
+    }
+    private void Return()
+    {
+        navManager.NavigateTo("/dashboard");
+    }
+}

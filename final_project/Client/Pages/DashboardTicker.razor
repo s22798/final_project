@@ -1,0 +1,180 @@
+﻿@page "/Dashboard/{Ticker}"
+@using Syncfusion.Blazor.Layouts
+@using Syncfusion.Blazor.Buttons
+@using final_project.Shared.Models.DTOs
+@inject final_project.Client.Services.Company.ICompanyService CompanyService
+@inject final_project.Client.Services.News.INewsService NewsService
+@inject final_project.Client.Services.Charts.IChartService ChartService
+@using System.Net.Http.Json
+@inject HttpClient Http
+@using Syncfusion.Blazor.Charts
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
+@inject IJSRuntime js
+@attribute [Authorize]
+
+ @if (Company == null || DataSource == null)
+{
+    <p><em>Loading...</em></p>
+    <div class="stockchartloader">
+    </div>
+}else
+{
+<div class="control-section" id="target">
+    <div style="padding-right:10px;padding-bottom:10px;text-align: right;">
+        <SfButton IsPrimary="true" @onclick="@(() => GoToWatchlist())">Watchlist</SfButton>
+        <SfButton CssClass="e-round" IconCss="e-icons e-plus-icon" IsPrimary="true" @onclick="@(() => AddToWatchlist())" title="Add to watchlist"></SfButton>
+    </div>
+    <SfDashboardLayout @ref="dashboardObject" Columns="5" AllowFloating="false" AllowResizing="false" AllowDragging="false">
+        <DashboardLayoutPanels>
+            <DashboardLayoutPanel Id="three" Row="0" Column="1" SizeX=2 SizeY=1>
+                <ContentTemplate>
+                    <div class="header">
+                        <img src="@Company.Logo_url" width="100" height="100">
+                        <h1>@Company.Name (@Company.Ticker)</h1>
+                    </div>
+                    <br>
+                    <br>
+                    <br>
+                    <p style="font-size:160%">Country: @Company.Country</p>
+                    <p style="font-size:160%">Description: @Company.Description</p>
+                </ContentTemplate>
+            </DashboardLayoutPanel>
+            <DashboardLayoutPanel Id="five" Row="1" Column="0" SizeX=4 SizeY=1>
+                <ContentTemplate>
+                     <SfStockChart Title="@Ticker" EnableSelector="false">
+                     <StockChartCrosshairSettings Enable="true"></StockChartCrosshairSettings>
+                <StockChartTooltipSettings Enable="true" Shared="true" Header="@Ticker"></StockChartTooltipSettings>
+                <StockChartSeriesCollection>
+                <StockChartSeries DataSource="@DataSource" Type="ChartSeriesType.HiloOpenClose" XName="Date" High="High" Low="Low" Open="Open" Close="Close" Volume="Volume"></StockChartSeries>
+                </StockChartSeriesCollection>
+                </SfStockChart>
+                </ContentTemplate>
+            </DashboardLayoutPanel>
+            <DashboardLayoutPanel Id="six" Row="0" Column="2" SizeX=2 SizeY=1>
+                <ContentTemplate>
+                    <div style="width: 100%; height: 100%; overflow: auto;">
+                    <h1>Last 5 articles</h1>
+                        @foreach(var item in News)
+                        { 
+                            <p style="text-decoration:double"><b>@item.Author</b></p>
+                            <div class="aritcle"><a href="@item.Article_url">@item.Title</a>
+                            <p>@item.Published_utc</p></div>
+                            <br />
+                        }
+                        </div>
+                    </ContentTemplate>
+            </DashboardLayoutPanel>
+        </DashboardLayoutPanels>
+    </SfDashboardLayout>
+</div>
+}
+@code {
+    [Parameter]
+    public string Ticker { get; set; }
+
+    private List<ChartDataDTO> DataSource;
+    private List<NewsDTO> News;
+
+    private CompanyDTODB Company { get; set; } = null;
+    private BrandingDTO Branding { get; set; }
+    private int idCompany = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Company = await CompanyService.GetCompanyFromDb(Ticker);
+        var data = await ChartService.GetChartDataByTicker(Ticker);
+        DataSource = data.ToList();
+        var data2 = await NewsService.GetNewsByTicker(Ticker);
+        News = data2.ToList();
+        idCompany = await Http.GetFromJsonAsync<int>($"api/companies/tickerid/{Ticker}");
+    }
+
+    SfDashboardLayout dashboardObject;
+
+
+    private void GoToWatchlist()
+    {
+        NavigationManager.NavigateTo("dashboard/watchlist");
+    }
+
+    private async Task AddToWatchlist()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        string userid = user.FindFirst(c => c.Type == "sub")?.Value;
+        var response = await CompanyService.AddToCompanyUsers(userid, idCompany);
+        if(response.IsSuccessStatusCode)
+        await js.InvokeVoidAsync("alert", "Added to watchlist");
+        else await js.InvokeVoidAsync("alert", "Already in watchlist");
+    }
+
+    string loadClass = "stockchartloader";
+    string loadDiv = "stockchartdiv";
+    void ChartLoaded(StockChartEventArgs args)
+    {
+        loadClass = "";
+        loadDiv = "";
+        StateHasChanged();
+    }
+    
+}
+<style>
+    .article{
+        display: flex;
+        justify-content: space-between;
+    }
+    .e-plus-icon::before {
+        content: '\e823';
+    }
+    .e-dashboardlayout {
+        padding: 10px;
+    }
+    
+    .panel-content {
+        vertical-align: middle;
+        font-size: 15px;
+        font-size: 15px;
+        font-weight: 500;
+        color: rgba(0, 0, 0, 0.61);
+        text-align: center;
+    }
+    
+    .e-panel .e-header-text {
+        padding: 12px 0 12px 0;
+    }
+    .e-dashboardlayout.e-control .e-panel .e-panel-header {
+        font-size: 15px;
+        font-weight: 500;
+        height: 37px;
+        line-height: 30px;
+        padding: 10px;
+        vertical-align: middle;
+        border-bottom: 0.5px solid #e3e3e3;
+    }
+    
+    .stockchartloader {
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #7a0fff;
+            width: 40px;
+            height: 40px;
+            position: absolute;
+            top: 46%;
+            left: 46%;
+            border-radius: 50%;
+            -webkit-animation: loader 2s linear infinite;
+            animation: loader 2s linear infinite;
+    }
+    .stockchartdiv {
+        visibility: hidden;
+    }
+    .header img {
+       float: left;
+    }
+
+    .header h1 {
+      position: relative;
+      top: 18px;
+      left: 10px;
+    }
+</style>
