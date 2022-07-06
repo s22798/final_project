@@ -11,8 +11,8 @@ namespace final_project.Server.Controllers
     [ApiController]
     public class CompanyController : ControllerBase
     {
-        private readonly ICompanyService _companyService;
-        public CompanyController(ICompanyService companyService)
+        private readonly ICompanyDbService _companyService;
+        public CompanyController(ICompanyDbService companyService)
         {
             _companyService = companyService;
         }
@@ -29,28 +29,6 @@ namespace final_project.Server.Controllers
             if (await _companyService.IfCompanyExists(ticker)) return Ok(await _companyService.GetCompanyIdByTicker(ticker));
 
             return NotFound();
-        }
-
-        [HttpPost("watchlist")]
-        public async Task<IActionResult> AddToWatchlist([FromBody]CompanyUser companyUser)
-        {
-            if (await _companyService.IfAlreadyInWatchlist(companyUser.IdCompany, companyUser.IdUser)) return BadRequest("Already in watchlist");
-            await _companyService.AddToCompanyUser(companyUser.IdCompany, companyUser.IdUser);
-            return Ok("Added to watchlist");
-        }
-
-        [HttpGet("watchlist/{idUser}")]
-        public async Task<IActionResult> GetWatchlistForUser(string idUser)
-        {
-            return Ok(await _companyService.GetCompaniesForUser(idUser));
-        }
-
-        [HttpDelete("watchlist")]
-        public async Task<IActionResult> DeleteFromWatchlist([FromBody]CompanyUser companyUser)
-        {
-            await _companyService.DeleteFromWatchlist(companyUser.IdCompany, companyUser.IdUser);
-            return Ok("Deleted from watchlist");
-
         }
 
         [HttpGet("{ticker}")]

@@ -36,7 +36,7 @@ namespace final_project.Client.Services.Company
             var seralized = JsonConvert.SerializeObject(model);
             var stringContent = new StringContent(seralized, Encoding.UTF8, "application/json");
 
-            var response = await _client.PostAsync("api/companies/watchlist", stringContent);
+            var response = await _client.PostAsync("api/watchlists", stringContent);
             return response;
         }
 
@@ -47,7 +47,7 @@ namespace final_project.Client.Services.Company
             {
                 Content = JsonContent.Create(model),
                 Method = HttpMethod.Delete,
-                RequestUri = new Uri("api/companies/watchlist", UriKind.Relative)
+                RequestUri = new Uri("api/watchlists", UriKind.Relative)
             };
             await _client.SendAsync(request);
         }
@@ -95,7 +95,7 @@ namespace final_project.Client.Services.Company
 
         public async Task<IEnumerable<CompanyDTODB>> GetWatchlist(string idUser)
         {
-            var res = await _client.GetStringAsync($"api/companies/watchlist/{idUser}");
+            var res = await _client.GetStringAsync($"api/watchlists/{idUser}");
             return JArray.Parse(res).SelectToken("").ToObject<IEnumerable<CompanyDTODB>>();
         }
 

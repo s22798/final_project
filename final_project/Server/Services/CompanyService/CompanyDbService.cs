@@ -8,11 +8,11 @@ using final_project.Shared.Models.DTOs;
 
 namespace final_project.Server.Services.CompanyService
 {
-    public class CompanyService : ICompanyService
+    public class CompanyDbService : ICompanyDbService
     {
         private readonly ApplicationDbContext _applicationDbContext;
 
-        public CompanyService(ApplicationDbContext applicationDbContext)
+        public CompanyDbService(ApplicationDbContext applicationDbContext)
         {
             _applicationDbContext = applicationDbContext;
         }

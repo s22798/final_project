@@ -12,8 +12,7 @@ using Microsoft.Extensions.Hosting;
 using System.Linq;
 using Syncfusion.Blazor;
 using final_project.Server.Services.CompanyService;
-
-
+using final_project.Server.Services.WatchlistService;
 
 namespace final_project.Server
 {
@@ -33,7 +32,8 @@ namespace final_project.Server
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(
                     Configuration.GetConnectionString("DefaultConnection")));
-            services.AddScoped<ICompanyService, CompanyService>();
+            services.AddScoped<ICompanyDbService, CompanyDbService>();
+            services.AddScoped<IWatchlistDbService, WatchlistDbService>();
             
             
 
