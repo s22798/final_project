@@ -42,14 +42,7 @@ namespace final_project.Client.Services.Company
 
         public async Task DeleteFromCompanyUsers(string idUser, int idCompany)
         {
-            var model = new WatchlistDTO() { IdUser = idUser, IdCompany = idCompany };
-            HttpRequestMessage request = new HttpRequestMessage
-            {
-                Content = JsonContent.Create(model),
-                Method = HttpMethod.Delete,
-                RequestUri = new Uri("api/watchlists", UriKind.Relative)
-            };
-            await _client.SendAsync(request);
+            await _client.DeleteAsync($"api/watchlists?idCompany={idCompany}&idUser={idUser}");
         }
 
         public async Task<CompanyDTO> GetCompanyByTicker(string ticker)

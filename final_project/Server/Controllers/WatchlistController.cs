@@ -31,9 +31,9 @@ namespace final_project.Server.Controllers
         }
 
         [HttpDelete]
-        public async Task<IActionResult> DeleteFromWatchlist([FromBody] CompanyUser companyUser)
+        public async Task<IActionResult> DeleteFromWatchlist(int idCompany, string idUser)
         {
-            await _watchlistDbService.DeleteFromWatchlist(companyUser.IdCompany, companyUser.IdUser);
+            await _watchlistDbService.DeleteFromWatchlist(idCompany, idUser);
             return Ok("Deleted from watchlist");
         }
     }
